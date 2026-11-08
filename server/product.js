@@ -16,12 +16,9 @@ function kinds(config) {
     ];
 }
 const templates = [
-    { mark: '01', name: 'Streaming box', text: 'OBS ready for a stream to OpenVibe Live.' },
-    { mark: '02', name: 'Studio box', text: 'A home for the OpenVibe creative apps.' },
-    { mark: '03', name: 'Code box', text: 'An IDE alongside your OpenVibe Codes work.' },
-    { mark: '04', name: 'Blender box', text: 'A rendering setup with the right GPU.' },
-    { mark: '05', name: 'Games box', text: 'A computer set up for games and a shared screen.' },
-    { mark: '06', name: 'Research box', text: 'A browser with your Vibe in the Dock.' },
+    { mark: '01', id: 'browser', name: 'Browser', text: 'A new browser desk for this session.', available: true },
+    { mark: '02', id: 'kept-browser', name: 'Kept browser', text: 'Reuse a saved browser profile between sessions.', available: false },
+    { mark: '03', id: 'throwaway', name: 'Throwaway', text: 'A fresh browser desk that ends with this session.', available: true },
 ];
 /** The whole price in one sentence (it was repeated, half-configured, on every card). */
 function priceLine(config) {

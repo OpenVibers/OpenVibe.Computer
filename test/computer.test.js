@@ -22,13 +22,13 @@ async function serve(opts) {
 
 test('home renders signed out and signed in; sign-in and computer controls are visible', async (t) => {
     const calls = [];
-    const run = { list: async (token) => { calls.push(['list', token]); return { sessions: [{ id: 'ses_a', kind: 'browser', state: 'running', usage: { desk_seconds: 12 } }] }; }, get: async (token, id) => { calls.push(['get', token, id]); return { id, kind: 'browser', state: 'running', usage: { desk_seconds: 12 } }; }, stop: async () => ({}) };
+    const run = { list: async (token) => { calls.push(['list', token]); return { sessions: [{ id: 'ses_a', kind: 'browser', state: 'running', usage: { desk_seconds: 12 } }] }; }, get: async (token, id) => { calls.push(['get', token, id]); return { id, kind: 'browser', state: 'running', usage: { desk_seconds: 12 } }; }, control: async () => ({ lease: { holder: { kind: 'person', subject: 'usr_a' }, seq: 1 } }), timeline: async () => ({ actions: [] }), snapshot: async () => ({ available: false, message: 'Snapshots are not available on this machine.' }), stop: async () => ({}), take: async () => ({}) };
     const s = await serve({ run }); t.after(s.close);
     const guest = await fetch(s.base); assert.equal(guest.status, 200); assert.match(await guest.text(), /Sign in with OpenVibe/);
     const home = await fetch(s.base, { headers: { cookie: 'ov_token=person-a' } }); const html = await home.text();
     assert.match(html, /Your computers/); assert.match(html, /Browser/); assert.match(html, /20 hours of cloud browser a month \(proposed\)/); assert.match(html, /Coming as Run adds them/); assert.doesNotMatch(html, /hero-art|account-line/);
     const detail = await fetch(`${s.base}/computers/ses_a`, { headers: { cookie: 'ov_token=person-a' } }); const page = await detail.text();
-    for (const mode of ['You drive, your AI watches', 'Your AI drives, you watch', 'Your AI drives and asks first', 'Together', 'Guests watch', 'Paused']) assert.match(page, new RegExp(mode));
+    assert.match(page, /person · usr_a/); assert.match(page, /Snapshots are not available on this machine/);
     assert.match(page, /Take over/); assert.equal(calls[0][1], 'person-a'); assert.deepEqual(calls[1], ['get', 'person-a', 'ses_a']);
     for (const path of ['/templates', '/pricing', '/docs', '/updates']) { const r = await fetch(`${s.base}${path}`); assert.equal(r.status, 200, `${path} renders signed out`); }
     for (const path of ['/templates', '/pricing', '/docs', '/updates']) { const r = await fetch(`${s.base}${path}`, { headers: { cookie: 'ov_token=person-a' } }); assert.equal(r.status, 200, `${path} renders signed in`); }
@@ -52,21 +52,23 @@ test('starting from the home page is a signed-in POST to Run', async (t) => {
     assert.equal(guest.status, 303); assert.match(guest.headers.get('location'), /auth\/login/); assert.equal(calls.length, 0);
     const signed = await fetch(`${s.base}/start`, { method: 'POST', headers: { cookie: 'ov_token=person-a', 'content-type': 'application/x-www-form-urlencoded' }, body: 'kind=browser', redirect: 'manual' });
     assert.equal(signed.status, 303); assert.equal(signed.headers.get('location'), '/computers/ses_started');
-    assert.equal(calls[0][0], 'person-a'); assert.equal(calls[0][1].kind, 'browser'); assert.match(calls[0][1].idempotency_key, /^computer:/);
+    assert.equal(calls[0][0], 'person-a'); assert.equal(calls[0][1].kind, 'browser'); assert.equal(calls[0][1].template, 'browser'); assert.match(calls[0][1].idempotency_key, /^computer:/);
+    await fetch(`${s.base}/start`, { method: 'POST', headers: { cookie: 'ov_token=person-a', 'content-type': 'application/x-www-form-urlencoded' }, body: 'kind=browser&template=throwaway', redirect: 'manual' });
+    assert.equal(calls[1][1].template, 'throwaway');
 });
 
-test('screen, act and stop map to Run; handoff reports unsupported Run capability', async (t) => {
-    const calls = []; const run = { command: async (token, id, body) => { calls.push([token, id, body]); return { result: { outcome: 'ack' } }; }, stop: async (token, id) => { calls.push([token, id, 'stop']); return { state: 'ended' }; }, get: async (token, id) => { calls.push([token, id, 'get']); return { id, state: 'running' }; } };
+test('screen, act, stop and take-back map to Run', async (t) => {
+    const calls = []; const run = { command: async (token, id, body) => { calls.push([token, id, body]); return { result: { outcome: 'ack' } }; }, stop: async (token, id) => { calls.push([token, id, 'stop']); return { state: 'ended' }; }, take: async (token, id) => { calls.push([token, id, 'take']); return { lease: { seq: 2 } }; } };
     const s = await serve({ run }); t.after(s.close); const headers = { authorization: 'Bearer user-token-A', 'content-type': 'application/json' };
     assert.equal((await fetch(`${s.base}/api/v1/computers/ses_a/screenshot`, { method: 'POST', headers, body: '{}' })).status, 200);
     assert.equal((await fetch(`${s.base}/api/v1/computers/ses_a/act`, { method: 'POST', headers, body: JSON.stringify({ kind: 'browser', value: { action: 'read' } }) })).status, 200);
     assert.equal((await fetch(`${s.base}/api/v1/computers/ses_a/stop`, { method: 'POST', headers, body: '{}' })).status, 200);
-    const handoff = await fetch(`${s.base}/api/v1/computers/ses_a/handoff`, { method: 'POST', headers, body: '{}' }); assert.equal(handoff.status, 501);
-    assert.equal(calls[0][2].kind, 'screen'); assert.equal(calls[1][2].kind, 'browser'); assert.deepEqual(calls[2], ['user-token-A', 'ses_a', 'stop']); assert.deepEqual(calls[3], ['user-token-A', 'ses_a', 'get']);
+    const handoff = await fetch(`${s.base}/api/v1/computers/ses_a/handoff`, { method: 'POST', headers, body: '{}' }); assert.equal(handoff.status, 200);
+    assert.equal(calls[0][2].kind, 'screen'); assert.equal(calls[1][2].kind, 'browser'); assert.deepEqual(calls[2], ['user-token-A', 'ses_a', 'stop']); assert.deepEqual(calls[3], ['user-token-A', 'ses_a', 'take']);
 });
 
 test('Run client sends the original bearer token on each upstream request', async () => {
     const seen = []; const client = createRunClient({ baseUrl: 'https://run.example', fetchImpl: async (url, options) => { seen.push([url, options.headers.authorization, options.method]); return { ok: true, json: async () => ({ sessions: [] }) }; } });
-    await client.list('one-token'); await client.get('another-token', 'ses_abc');
-    assert.deepEqual(seen, [['https://run.example/api/v1/sessions', 'Bearer one-token', 'GET'], ['https://run.example/api/v1/sessions/ses_abc', 'Bearer another-token', 'GET']]);
+    await client.list('one-token'); await client.get('another-token', 'ses_abc'); await client.create('third-token', { kind: 'browser', template: 'throwaway' });
+    assert.deepEqual(seen, [['https://run.example/api/v1/sessions', 'Bearer one-token', 'GET'], ['https://run.example/api/v1/sessions/ses_abc', 'Bearer another-token', 'GET'], ['https://run.example/api/v1/sessions?template=throwaway', 'Bearer third-token', 'POST']]);
 });

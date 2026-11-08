@@ -19,8 +19,8 @@ function createApi({ run, sso }) {
         const t = token(req, res); if (!t) return;
         if (req.body?.kind && req.body.kind !== 'browser') return res.status(422).json({ code: 'computer.kind.unsupported', detail: 'Run currently creates browser sessions only.' });
         const { template, kind, ...runBody } = req.body || {};
-        if (template) return res.status(501).json({ code: 'computer.template.pending', detail: 'Run does not accept templates yet.' });
-        res.status(201).json(await run.create(t, { kind: 'browser', ...runBody }));
+        if (template && !['browser', 'kept-browser', 'throwaway'].includes(template)) return res.status(422).json({ code: 'computer.template.invalid', detail: 'Choose browser, kept-browser or throwaway.' });
+        res.status(201).json(await run.create(t, { kind: 'browser', ...(template ? { template } : {}), ...runBody }));
     }));
     r.get('/computers/:id', wrap(async (req, res) => { const t = token(req, res); if (!t) return; res.json(await run.get(t, req.params.id)); }));
     r.post('/computers/:id/stop', wrap(async (req, res) => { const t = token(req, res); if (!t) return; res.json(await run.stop(t, req.params.id)); }));
@@ -37,8 +37,7 @@ function createApi({ run, sso }) {
     }));
     r.post('/computers/:id/handoff', wrap(async (req, res) => {
         const t = token(req, res); if (!t) return;
-        await run.get(t, req.params.id);
-        res.status(501).type('application/problem+json').json({ type: 'about:blank', title: 'Run handoff unavailable', status: 501, code: 'computer.handoff.pending', detail: 'Run does not expose B3 control modes or a handoff route yet.' });
+        res.json(await run.take(t, req.params.id));
     }));
     return r;
 }
