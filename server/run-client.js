@@ -16,9 +16,16 @@ function createRunClient({ baseUrl, fetchImpl = globalThis.fetch }) {
     return {
         list: (token, query = '') => request(token, `/sessions${query}`),
         get: (token, id) => request(token, `/sessions/${encodeURIComponent(id)}`),
-        create: (token, body) => request(token, '/sessions', { method: 'POST', body }),
+        create: (token, body) => {
+            const { template, ...payload } = body || {};
+            return request(token, `/sessions${template ? `?template=${encodeURIComponent(template)}` : ''}`, { method: 'POST', body: payload });
+        },
         stop: (token, id) => request(token, `/sessions/${encodeURIComponent(id)}/end`, { method: 'POST', body: {} }),
         command: (token, id, body) => request(token, `/sessions/${encodeURIComponent(id)}/commands`, { method: 'POST', body }),
+        control: (token, id) => request(token, `/sessions/${encodeURIComponent(id)}/control`),
+        take: (token, id) => request(token, `/sessions/${encodeURIComponent(id)}/control/take`, { method: 'POST', body: {} }),
+        timeline: (token, id) => request(token, `/sessions/${encodeURIComponent(id)}/timeline`),
+        snapshot: (token, id) => request(token, `/sessions/${encodeURIComponent(id)}/snapshot`),
     };
 }
 module.exports = { createRunClient, RunError };
