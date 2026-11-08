@@ -1,0 +1,18 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "OpenVibe.Computer API", "version": "1.0.0", "description": "Thin facade for OpenVibe.Run sessions. The caller's bearer token is forwarded unchanged; Run enforces authorization, placement and budgets." },
+  "servers": [{ "url": "https://openvibe.computer/api/v1" }],
+  "security": [{ "bearerAuth": [] }],
+  "components": { "securitySchemes": { "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "OpenVibe Network user token" } }, "schemas": { "ComputerCreate": { "type": "object", "properties": { "kind": { "const": "browser" }, "width": { "type": "integer" }, "height": { "type": "integer" }, "ttl_s": { "type": "integer" }, "idle_s": { "type": "integer" }, "machine": { "type": "string" }, "requirements": { "type": "object" }, "idempotency_key": { "type": "string" } }, "required": ["kind"], "additionalProperties": false }, "Act": { "type": "object", "properties": { "kind": { "enum": ["screen", "input", "browser"] }, "value": { "type": "object" }, "id": { "type": "string" } }, "required": ["kind", "value"], "additionalProperties": false } } },
+  "paths": {
+    "/computers": {
+      "get": { "summary": "List your computers", "parameters": [{ "in": "query", "name": "state", "schema": { "enum": ["running", "ended", "all"] } }, { "in": "query", "name": "limit", "schema": { "type": "integer" } }], "responses": { "200": { "description": "Run session list" } } },
+      "post": { "summary": "Start a browser computer", "description": "Maps to Run POST /api/v1/sessions. Run currently accepts browser sessions only.", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ComputerCreate" } } } }, "responses": { "201": { "description": "Run session" }, "422": { "description": "Unsupported kind or invalid request" } } }
+    },
+    "/computers/{id}": { "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "get": { "summary": "Get a computer", "responses": { "200": { "description": "Run session" } } } },
+    "/computers/{id}/stop": { "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "post": { "summary": "Stop a computer", "responses": { "200": { "description": "Ended Run session" } } } },
+    "/computers/{id}/screenshot": { "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "post": { "summary": "Capture a screen", "description": "Sends a Run screen command. This is a one off image command, not a live stream.", "requestBody": { "content": { "application/json": { "schema": { "type": "object", "properties": { "max_width": { "type": "integer", "minimum": 320, "maximum": 1920 } } } } } }, "responses": { "200": { "description": "Run screen command result" } } } },
+    "/computers/{id}/act": { "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "post": { "summary": "Send a computer command", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Act" } } } }, "responses": { "200": { "description": "Run command result" } } } },
+    "/computers/{id}/handoff": { "parameters": [{ "in": "path", "name": "id", "required": true, "schema": { "type": "string" } }], "post": { "summary": "Hand controls to the person", "description": "Reserved facade operation. Returns 501 until Run supports B3 control modes and handoff.", "responses": { "501": { "description": "Run handoff is not available yet" } } } }
+  }
+}
