@@ -1,0 +1,19 @@
+{
+  "name": "openvibe-computer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The front door and API facade for OpenVibe computer sessions",
+  "main": "server/index.js",
+  "scripts": { "start": "node server/index.js", "dev": "NODE_ENV=development node server/index.js", "test": "node --test test/*.test.js" },
+  "engines": { "node": ">=22.0.0" },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "helmet": "^8.1.0",
+    "openvibe-contracts": "https://codeload.github.com/OpenVibers/OpenVibe.Contracts/tar.gz/refs/tags/v0.346.0",
+    "openvibe-sdk": "https://codeload.github.com/OpenVibers/OpenVibe.SDK/tar.gz/refs/tags/v0.97.1",
+    "openvibe-shared": "https://codeload.github.com/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/v4.135.0"
+  },
+  "license": "AGPL-3.0-only"
+}

@@ -1,0 +1,10 @@
+{
+  "name": "OpenVibe.Computer",
+  "description": "Start and manage your OpenVibe computer sessions. Run owns placement, budgets and session state.",
+  "url": "https://openvibe.computer",
+  "version": "1.0.0",
+  "documentation": "https://openvibe.computer/docs",
+  "openapi": "https://openvibe.computer/openapi.json",
+  "authentication": { "type": "bearer", "description": "A person's OpenVibe Network token; forwarded to Run." },
+  "capabilities": ["computers.list", "computers.create", "computers.read", "computers.stop", "computers.screenshot", "computers.act", "computers.handoff"]
+}

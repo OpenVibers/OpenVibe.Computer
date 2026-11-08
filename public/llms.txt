@@ -1,0 +1,12 @@
+# OpenVibe.Computer
+
+A computer for you, your AI, or both. OpenVibe.Computer is the front door and API facade; OpenVibe.Run owns sessions, budgets and placement.
+
+- [Home](/)
+- [Templates](/templates)
+- [Pricing](/pricing)
+- [Docs](/docs)
+- [Updates](/updates)
+- [OpenAPI](/openapi.json)
+- [Agent descriptor](/.well-known/agent.json)
+
