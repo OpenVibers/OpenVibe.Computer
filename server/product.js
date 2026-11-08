@@ -23,4 +23,10 @@ const templates = [
     { mark: '05', name: 'Games box', text: 'A computer set up for games and a shared screen.' },
     { mark: '06', name: 'Research box', text: 'A browser with your Vibe in the Dock.' },
 ];
-module.exports = { kinds, templates, freeText, priceText };
+/** The whole price in one sentence (it was repeated, half-configured, on every card). */
+function priceLine(config) {
+    const browser = config.browserFreeMinutes == null ? '20 hours of cloud browser a month (proposed)' : `${minutes(config.browserFreeMinutes)} of cloud browser`;
+    const after = config.pricePerMinute == null ? 'then per minute at a price shown before any paid session starts' : `then $${config.pricePerMinute.toFixed(4)} a minute`;
+    return `Free and unlimited on your own Link machines. In the cloud: ${browser}, ${after}.`;
+}
+module.exports = { kinds, templates, freeText, priceText, priceLine };
