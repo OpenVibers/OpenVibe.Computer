@@ -32,7 +32,15 @@ test('home renders signed out and signed in; sign-in and computer controls are v
     assert.match(page, /Take over/); assert.equal(calls[0][1], 'person-a'); assert.deepEqual(calls[1], ['get', 'person-a', 'ses_a']);
     for (const path of ['/templates', '/pricing', '/docs', '/updates']) { const r = await fetch(`${s.base}${path}`); assert.equal(r.status, 200, `${path} renders signed out`); }
     for (const path of ['/templates', '/pricing', '/docs', '/updates']) { const r = await fetch(`${s.base}${path}`, { headers: { cookie: 'ov_token=person-a' } }); assert.equal(r.status, 200, `${path} renders signed in`); }
-    assert.equal((await fetch(`${s.base}/openapi.json`)).status, 200); assert.equal((await fetch(`${s.base}/.well-known/agent.json`)).status, 200); assert.equal((await fetch(`${s.base}/llms.txt`)).status, 200);
+    assert.equal((await fetch(`${s.base}/openapi.json`)).status, 200); assert.equal((await fetch(`${s.base}/.well-known/agent.json`)).status, 200);
+    const llms = await fetch(`${s.base}/llms.txt`); assert.equal(llms.status, 200);
+    assert.match(await llms.text(), /\(\/llms-full\.txt\)/, 'llms.txt names the full text');
+    const full = await fetch(`${s.base}/llms-full.txt`); assert.equal(full.status, 200);
+    assert.match(full.headers.get('content-type'), /^text\/plain/);
+    const fullText = await full.text();
+    assert.ok(fullText.startsWith('# OpenVibe.Computer\n'), 'llms-full.txt opens with the site heading');
+    assert.ok(fullText.length > 500, `llms-full.txt carries the pages (${fullText.length} characters)`);
+    for (const path of ['/templates', '/pricing', '/docs', '/updates']) assert.ok(fullText.includes(`URL: https://openvibe.computer${path}`), `llms-full.txt lists ${path}`);
     { const r = await fetch(`${s.base}/release.json`); assert.equal(r.status, 200, 'the navbar release watch polls /release.json'); assert.equal((await r.json()).service, 'computer'); }
 });
 
