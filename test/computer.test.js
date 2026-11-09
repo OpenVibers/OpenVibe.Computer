@@ -33,6 +33,7 @@ test('home renders signed out and signed in; sign-in and computer controls are v
     for (const path of ['/templates', '/pricing', '/docs', '/updates']) { const r = await fetch(`${s.base}${path}`); assert.equal(r.status, 200, `${path} renders signed out`); }
     for (const path of ['/templates', '/pricing', '/docs', '/updates']) { const r = await fetch(`${s.base}${path}`, { headers: { cookie: 'ov_token=person-a' } }); assert.equal(r.status, 200, `${path} renders signed in`); }
     assert.equal((await fetch(`${s.base}/openapi.json`)).status, 200); assert.equal((await fetch(`${s.base}/.well-known/agent.json`)).status, 200); assert.equal((await fetch(`${s.base}/llms.txt`)).status, 200);
+    { const r = await fetch(`${s.base}/release.json`); assert.equal(r.status, 200, 'the navbar release watch polls /release.json'); assert.equal((await r.json()).service, 'computer'); }
 });
 
 test('facade forwards only the presented person token to Run', async (t) => {
