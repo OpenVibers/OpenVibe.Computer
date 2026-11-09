@@ -15,7 +15,7 @@ function createApp(opts = {}) {
     const app = express();
     app.disable('x-powered-by'); app.set('trust proxy', config.trustProxy);
     app.use(helmet({ contentSecurityPolicy: { directives: {
-        defaultSrc: ["'self'"], scriptSrc: ["'self'", "'unsafe-inline'", 'https://openvibe.network'], styleSrc: ["'self'", "'unsafe-inline'", 'https://openvibe.network', 'https://fonts.googleapis.com'], fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'], imgSrc: ["'self'", 'data:', 'https://openvibe.network'], connectSrc: ["'self'", 'https://openvibe.network', 'https://openvibe.chat', 'https://billing.openvibe.network', 'https://openvibe.events'], frameSrc: ["'self'", 'https://openvibe.network'], frameAncestors: ["'none'"], objectSrc: ["'none'"], baseUri: ["'self'"], formAction: ["'self'", 'https://openvibe.network'],
+        defaultSrc: ["'self'"], scriptSrc: ["'self'", "'unsafe-inline'", 'https://openvibe.network', 'https://static.cloudflareinsights.com'], styleSrc: ["'self'", "'unsafe-inline'", 'https://openvibe.network', 'https://fonts.googleapis.com'], fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'], imgSrc: ["'self'", 'data:', 'https://openvibe.network'], connectSrc: ["'self'", 'https://openvibe.network', 'https://openvibe.chat', 'https://billing.openvibe.network', 'https://openvibe.events', 'https://cloudflareinsights.com'], frameSrc: ["'self'", 'https://openvibe.network'], frameAncestors: ["'none'"], objectSrc: ["'none'"], baseUri: ["'self'"], formAction: ["'self'", 'https://openvibe.network'],
     } }, crossOriginEmbedderPolicy: false, referrerPolicy: { policy: 'strict-origin-when-cross-origin' } }));
     app.use(express.urlencoded({ extended: false }));
     app.use('/auth', sso.router(express));
@@ -28,6 +28,9 @@ function createApp(opts = {}) {
     app.get('/openapi.json', (_req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'openapi.json')));
     app.get('/.well-known/agent.json', (_req, res) => res.sendFile(path.join(__dirname, '..', 'public', '.well-known', 'agent.json')));
     app.use('/api/v1', createApi({ run, sso }));
+    // GET /release.json (ADR-016): the navbar's release watch polls it so open tabs learn of a new release (the 11-09
+    // browser sweep found it answering 404 here).
+    require('openvibe-shared/release').createRelease({ service: 'computer', root: path.join(__dirname, '..') }).mount(app);
     app.use('/shared', require('openvibe-shared/serve').handler());
     app.use(express.static(path.join(__dirname, '..', 'public'), { index: false, maxAge: '1h' }));
     app.use(createPages({ config, run, sso }));
