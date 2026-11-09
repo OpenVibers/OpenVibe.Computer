@@ -4,7 +4,7 @@ The front door and API facade for OpenVibe computers. Run owns sessions, placeme
 
 ## Run locally
 
-Node 22 or newer is required.
+Link 22 or newer is required.
 
 ```sh
 npm ci
