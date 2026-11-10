@@ -44,6 +44,12 @@ test('home renders signed out and signed in; sign-in and computer controls are v
     { const r = await fetch(`${s.base}/release.json`); assert.equal(r.status, 200, 'the navbar release watch polls /release.json'); assert.equal((await r.json()).service, 'computer'); }
 });
 
+test('the security policy lets an avatar from openvibe.media show in img-src', async (t) => {
+    const s = await serve({ run: {} }); t.after(s.close);
+    const csp = (await fetch(s.base)).headers.get('content-security-policy') || '';
+    assert.match(csp, /img-src[^;]*https:\/\/openvibe\.media(?:[ ;]|$)/, csp);
+});
+
 test('facade forwards only the presented person token to Run', async (t) => {
     const received = [];
     const run = { list: async (token) => { received.push(token); return { sessions: [] }; }, create: async (token, body) => { received.push(token); return { id: 'ses_new', ...body }; } };
