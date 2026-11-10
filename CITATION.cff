@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use OpenVibe.Computer in research or a product, cite it as below."
+title: openvibe-computer
+type: software
+authors:
+  - name: OpenVibe
+    alias: OpenVibers
+    website: https://openvibe.network
+repository-code: https://github.com/OpenVibers/OpenVibe.Computer
+url: https://openvibe.computer
+license: AGPL-3.0-only
+abstract: "A virtual computer in the browser for you, your AI, or both, at openvibe.computer."
+keywords:
+  - openvibe
+  - ai
+  - browser
+  - remote-desktop
+  - virtual-machine

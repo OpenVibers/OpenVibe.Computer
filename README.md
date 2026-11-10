@@ -2,6 +2,9 @@
 
 The front door and API facade for OpenVibe computers. Run owns sessions, placement and budgets; this service renders the product and forwards a person's Network token to Run unchanged.
 
+**Live site:** https://openvibe.computer · **API docs:** https://openvibe.services · **For AI:** https://openvibe.computer/llms.txt
+**Run it:** `npm ci && npm run dev` (Node 22 or newer) · **Tests:** `npm test`
+
 ## Run locally
 
 Link 22 or newer is required.
