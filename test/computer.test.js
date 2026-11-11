@@ -26,6 +26,8 @@ test('home renders signed out and signed in; sign-in and computer controls are v
     const s = await serve({ run }); t.after(s.close);
     const guest = await fetch(s.base); assert.equal(guest.status, 200); assert.match(await guest.text(), /Sign in with OpenVibe/);
     const home = await fetch(s.base, { headers: { cookie: 'ov_token=person-a' } }); const html = await home.text();
+    assert.match(html, /<script type="application\/ld\+json">[^<]*"@type":"WebSite"/, 'the home carries the site entity for search engines');
+    assert.match(html, /"name":"OpenVibe\.Computer"/);
     assert.match(html, /Your computers/); assert.match(html, /Browser/); assert.match(html, /20 hours of cloud browser a month \(proposed\)/); assert.match(html, /Coming as Run adds them/); assert.doesNotMatch(html, /hero-art|account-line/);
     const detail = await fetch(`${s.base}/computers/ses_a`, { headers: { cookie: 'ov_token=person-a' } }); const page = await detail.text();
     assert.match(page, /person · usr_a/); assert.match(page, /Snapshots are not available on this machine/);
