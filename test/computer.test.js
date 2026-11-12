@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const http = require('node:http');
 const express = require('express');
 const { createApp } = require('../server/app');
+const { NAV } = require('../server/layout');
 const { createRunClient } = require('../server/run-client');
 
 const config = { port: 0, host: '127.0.0.1', baseUrl: 'http://computer.test', networkUrl: 'https://openvibe.network', runUrl: 'https://openvibe.run', browserFreeMinutes: null, desktopFreeMinutes: null, pricePerMinute: null };
@@ -88,4 +89,20 @@ test('Run client sends the original bearer token on each upstream request', asyn
     const seen = []; const client = createRunClient({ baseUrl: 'https://run.example', fetchImpl: async (url, options) => { seen.push([url, options.headers.authorization, options.method]); return { ok: true, json: async () => ({ sessions: [] }) }; } });
     await client.list('one-token'); await client.get('another-token', 'ses_abc'); await client.create('third-token', { kind: 'browser', template: 'throwaway' });
     assert.deepEqual(seen, [['https://run.example/api/v1/sessions', 'Bearer one-token', 'GET'], ['https://run.example/api/v1/sessions/ses_abc', 'Bearer another-token', 'GET'], ['https://run.example/api/v1/sessions?template=throwaway', 'Bearer third-token', 'POST']]);
+});
+
+
+test('every page sends Computer\'s own page list, and every row is a route', async (t) => {
+    const s = await serve({ run: { list: async () => ({ sessions: [] }) } }); t.after(s.close);
+    assert.equal(NAV[0].label, 'Computer', 'the home row carries the site\'s name, never "Home"');
+    const own = NAV.map(({ label, href }) => ({ label, href }));
+    for (const path of NAV.map((x) => x.href)) {
+        const r = await fetch(`${s.base}${path}`);
+        assert.equal(r.status, 200, `${path} is a route of this server`);
+        const html = await r.text();
+        const init = /OpenVibeNavbar\.init\((\{[\s\S]*?\})\);/.exec(html);
+        assert.ok(init, `${path} starts the shared navbar`);
+        const nav = JSON.parse(init[1]);
+        assert.deepEqual(nav.links.map(({ label, href }) => ({ label, href })), own, `${path} sends the same list as the home`);
+    }
 });

@@ -4,7 +4,7 @@ const serve = require('openvibe-shared/serve');
 const seo = require('openvibe-shared/seo');
 const { esc } = require('./html');
 const NAV = [
-    { label: 'Home', href: '/' }, { label: 'Templates', href: '/templates' }, { label: 'Pricing', href: '/pricing' },
+    { label: 'Computer', href: '/' }, { label: 'Templates', href: '/templates' }, { label: 'Pricing', href: '/pricing' },
     { label: 'Docs', href: '/docs' }, { label: 'Updates', href: '/updates' },
 ];
 function page({ title, body, viewer, config, path = '/' }) {
