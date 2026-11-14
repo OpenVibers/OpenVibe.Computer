@@ -22,3 +22,5 @@ button[disabled][title]{cursor:not-allowed;opacity:.6}
 /* Less air under the hero now that it is words only (11-08) */
 .hero{padding-bottom:20px}
 #start{padding-top:8px}
+/* Design rule 201: the intro is one line on a computer, at most two on a phone. */
+@media (max-width: 640px) { .page-intro { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; } }
