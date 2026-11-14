@@ -27,6 +27,6 @@ See [deploy/LAUNCH.md](deploy/LAUNCH.md) for the DNS, Cloudflare, OAuth and vhos
 
 <!-- versions:start -->
 - openvibe-contracts: v0.419.0
-- openvibe-sdk: v0.168.0
+- openvibe-sdk: v0.172.0
 - openvibe-shared: v4.256.0
 <!-- versions:end -->
