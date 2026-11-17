@@ -31,4 +31,5 @@ button[disabled][title]{cursor:not-allowed;opacity:.6}
 .machine-list li{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
 .machine-list li>strong{flex:1 1 100%;min-width:0;overflow-wrap:anywhere}
 .machine-list li>.status:not(.is-on){color:var(--muted)!important}
+.machine-list li>.lan{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.8rem;color:var(--muted)}
 .machine-list li>.role{padding:2px 9px;border-radius:999px;background:var(--soft);color:var(--accent);font-size:.78rem;font-weight:600}

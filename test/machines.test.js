@@ -24,7 +24,7 @@ async function serve(opts) {
     const server = http.createServer(app); await new Promise((r) => server.listen(0, '127.0.0.1', r));
     return { base: `http://127.0.0.1:${server.address().port}`, close: () => new Promise((r) => server.close(r)) };
 }
-const node = { id: 'dev_1', name: 'Studio PC', online: true, specs_words: 'Linux · 16 cores · 64 GB', roles: ['desks.host', 'codes.worker'] };
+const node = { id: 'dev_1', name: 'Studio PC', online: true, specs_words: 'Linux · 16 cores · 64 GB', specs: { lan: ['192.168.1.20', 'fd12:3456::20', '<b>'] }, roles: ['desks.host', 'codes.worker'] };
 
 test('the client asks the registry as the person, and says what it answered', async () => {
     const seen = [];
@@ -71,7 +71,7 @@ test('the home lists your machines; with none it says how to add one; an outage 
     const withOne = await serve({ machines: { list: async () => ({ machines: [node] }) } }); t.after(withOne.close);
     const html = await (await fetch(withOne.base, { headers: { cookie: 'ov_token=person-a' } })).text();
     assert.match(html, /<h2>Your machines<\/h2>/);
-    assert.match(html, /<strong>Studio PC<\/strong><span class="status is-on">online<\/span><span>Linux · 16 cores · 64 GB<\/span><span class="role">desks\.host<\/span>/);
+    assert.match(html, /<strong>Studio PC<\/strong><span class="status is-on">online<\/span><span>Linux · 16 cores · 64 GB<\/span><span class="lan" title="192\.168\.1\.20, fd12:3456::20">192\.168\.1\.20 \+1<\/span><span class="role">desks\.host<\/span>/, 'where it is on its network (no markup ever)');
     assert.match(html, /href="https:\/\/openvibe\.link">Add a machine/);
     const none = await serve({ machines: { list: async () => ({ machines: [] }) } }); t.after(none.close);
     assert.match(await (await fetch(none.base, { headers: { cookie: 'ov_token=person-a' } })).text(), /No machine yet\. Pair a computer with the/);
