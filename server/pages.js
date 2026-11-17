@@ -5,21 +5,31 @@ const { esc } = require('./html');
 const { send } = require('./layout');
 const { priceText, freeText, kinds, templates, priceLine } = require('./product');
 
-function createPages({ config, run, sso }) {
+function createPages({ config, run, sso, machines = null }) {
     const r = express.Router();
     const viewerOf = (req) => req.user || req.viewer || { kind: 'anonymous' };
     const tokenOf = (req) => sso.extractToken(req);
     const card = (k) => `<article class="kind-card kind-card--ready"><span class="eyebrow">${esc(k.badge)}</span><h3>${esc(k.name)}</h3><p>${esc(k.for)}</p><p class="runs">Runs on ${esc(k.runs)}</p><form method="post" action="/start"><input type="hidden" name="kind" value="${esc(k.id)}"><label for="template-${esc(k.id)}">Start from template</label><select id="template-${esc(k.id)}" name="template"><option value="browser">Browser</option><option value="throwaway">Throwaway</option><option value="kept-browser" disabled>Kept browser · not available on this machine</option></select><button class="button-primary" type="submit">Start a ${esc(k.name.toLowerCase())}</button></form></article>`;
     const soon = (k) => `<li class="kind-soon"><b>${esc(k.name)}</b><span>${esc(k.for)}</span><small>${esc(k.runs.replace(/\.$/, ''))}</small></li>`;
     r.get('/', async (req, res) => {
-        const viewer = viewerOf(req); let sessions = [];
-        if (viewer.kind === 'user') { try { sessions = (await run.list(tokenOf(req), '?state=all&limit=8')).sessions || []; } catch { /* show dashboard state without hiding the service page */ } }
+        const viewer = viewerOf(req); let sessions = []; let mine = null;
+        if (viewer.kind === 'user') {
+            const t = tokenOf(req);
+            const [s, ms] = await Promise.all([
+                run.list(t, '?state=all&limit=8').then((x) => x.sessions || []).catch(() => []),   // show the service page anyway
+                machines ? machines.list(t).then((x) => x.machines || []).catch(() => null) : Promise.resolve(null),
+            ]);
+            sessions = s; mine = ms;
+        }
         const computerRows = sessions.map((s) => `<li><a href="/computers/${encodeURIComponent(s.id)}"><strong>${esc(s.kind === 'browser' ? 'Browser computer' : s.kind)}</strong></a><span class="status">${esc(s.state)}</span><span>${esc(s.id)}</span><a href="/computers/${encodeURIComponent(s.id)}">Open</a>${s.state !== 'ended' ? `<form method="post" action="/computers/${encodeURIComponent(s.id)}/stop"><button class="button-quiet">Stop</button></form>` : ''}</li>`).join('');
         const body = `<section class="hero"><div><span class="eyebrow">YOUR COMPUTER, WHEREVER YOU ARE</span><h1>A computer for you, your AI, or both.</h1><p>Start a browser desk on OpenVibe Run. Choose where it runs, keep control close, and bring your own Link machine for free use.</p><a class="button-primary" href="#start">Start a computer</a> <a class="button-secondary" href="/templates">Explore templates</a></div></section>
         <section id="start"><div class="section-heading"><div><span class="eyebrow">PICK A COMPUTER</span><h2>Start a computer</h2></div><p>Each session runs where its kind is supported. Run chooses placement and enforces budgets.</p></div><p class="price-line">${esc(priceLine(config))} <a href="/pricing">Pricing</a></p><div class="kind-grid">${kinds(config).filter((k) => k.available).map(card).join('')}</div>
         <h3 class="soon-h">Coming as Run adds them <span class="muted">${kinds(config).filter((k) => !k.available).length}</span></h3><ul class="kind-soon-grid">${kinds(config).filter((k) => !k.available).map(soon).join('')}</ul></section>
         ${viewer.kind === 'user' ? `<section class="your-computers"><div class="section-heading"><div><span class="eyebrow">YOUR WORKSPACE</span><h2>Your computers</h2></div><a href="/api/v1/computers">Open API</a></div>${computerRows ? `<ul class="computer-list">${computerRows}</ul>` : '<p>No running or recent computers yet. Start a browser computer to see it here.</p>'}</section>` : `<section class="sign-in-callout"><h2>Keep your computers close</h2><p>Sign in to open, stop and manage your sessions.</p><a class="button-secondary" href="/auth/login?next=%2F">Sign in with OpenVibe</a></section>`}`;
-        send(res, { title: 'A computer for you, your AI, or both', body, viewer, config, path: '/' });
+        // Your machines (plan §AD.15: machines are Computer's): your own computers through the Link and the shared nodes.
+        const machineRow = (x) => `<li><strong>${esc(x.name || x.id)}</strong><span class="status${x.online ? ' is-on' : ''}">${x.online ? 'online' : 'offline'}</span><span>${esc(x.specs_words || x.os || '')}</span>${(Array.isArray(x.roles) ? x.roles : []).map((r) => `<span class="role">${esc(r)}</span>`).join('')}</li>`;
+        const machinesSec = viewer.kind === 'user' && mine !== null ? `<section class="your-machines"><div class="section-heading"><div><span class="eyebrow">YOUR MACHINES</span><h2>Your machines</h2></div><a href="/api/v1/machines">Open API</a></div>${mine.length ? `<ul class="computer-list machine-list">${mine.map(machineRow).join('')}</ul>` : '<p>No machine yet. Pair a computer with the <a href="https://openvibe.link">OpenVibe Link</a> and it shows here, with what it lends to your agents.</p>'}<p class="muted"><a href="https://openvibe.link">Add a machine</a></p></section>` : '';
+        send(res, { title: 'A computer for you, your AI, or both', body: body + machinesSec, viewer, config, path: '/' });
     });
     r.post('/start', express.urlencoded({ extended: false }), async (req, res) => {
         const kind = String(req.body.kind || 'browser');
