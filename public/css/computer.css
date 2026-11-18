@@ -2,6 +2,11 @@
 
 /* Theme tokens (Shared presets: a person's theme and light/dark follow), over the first palette above. */
 :root{--ink:var(--text-primary,#e6edf7);--muted:var(--text-secondary,#96a7c2);--paper:var(--bg-primary,#0a0f1c);--panel:var(--bg-card,#131c2e);--line:var(--border,#26344d);--accent:var(--accent-light,#60a5fa);--soft:color-mix(in srgb,var(--accent,#3b82f6) 12%,transparent);--good:var(--success,#22c55e)}
+/* Contrast in every theme (axe, browser check 11-15): the accent above is the theme's light accent, so white on it was
+   2.5:1 and accent text faded on light pages. A button's fill is that accent 40% darker; accent text leans
+   toward the ink. */
+.button-primary{background:color-mix(in srgb,var(--accent,#3b82f6),#000 40%)}
+.computer-page a:not([class*="button"]),.eyebrow,.template-mark,.mode-list li.selected{color:color-mix(in srgb,var(--accent) 50%,var(--ink))}
 html{background:var(--paper);color:var(--ink)}
 /* The hero is words and two buttons now (the drawn screen was a picture of nothing) */
 .hero{grid-template-columns:1fr;max-width:760px}
@@ -24,3 +29,9 @@ button[disabled][title]{cursor:not-allowed;opacity:.6}
 #start{padding-top:8px}
 /* Design rule 201: the intro is one line on a computer, at most two on a phone. */
 @media (max-width: 640px) { .page-intro { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; } }
+/* Your machines (plan AD.15): the name, then online or offline, what it is, and its roles as chips. */
+.machine-list li{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.machine-list li>strong{flex:1 1 100%;min-width:0;overflow-wrap:anywhere}
+.machine-list li>.status:not(.is-on){color:var(--muted)!important}
+.machine-list li>.lan{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.8rem;color:var(--muted)}
+.machine-list li>.role{padding:2px 9px;border-radius:999px;background:var(--soft);color:var(--accent);font-size:.78rem;font-weight:600}

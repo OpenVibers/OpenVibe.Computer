@@ -10,6 +10,8 @@ function load(env = process.env) {
         trustProxy: env.TRUST_PROXY != null ? Number(env.TRUST_PROXY) : 2,
         networkUrl, networkInternalUrl: trim(env.OV_NETWORK_INTERNAL_URL || 'http://127.0.0.1:4000'),
         runUrl: trim(env.OV_RUN_URL || 'https://openvibe.run'),
+        // The machine registry (Bot holds it until the move, plan §AD.15): the internal address when both run here.
+        machinesUrl: trim(env.OV_MACHINES_URL || env.OV_BOT_INTERNAL_URL || env.OV_BOT_URL || 'https://openvibe.bot'),
         clientId: env.OV_OAUTH_CLIENT_ID || 'computer', clientSecret: env.OV_OAUTH_CLIENT_SECRET || '',
         browserFreeMinutes: numberOrNull(env.COMPUTER_BROWSER_FREE_MINUTES),
         desktopFreeMinutes: numberOrNull(env.COMPUTER_DESKTOP_FREE_MINUTES),

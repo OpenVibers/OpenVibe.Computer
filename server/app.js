@@ -4,6 +4,7 @@ const express = require('express');
 const helmet = require('helmet');
 const { createSsoClient } = require('openvibe-sdk/sso');
 const { createRunClient } = require('./run-client');
+const { createMachinesClient } = require('./machines-client');
 const { createApi } = require('./api');
 const { createPages } = require('./pages');
 const seo = require('openvibe-shared/seo');
@@ -24,8 +25,12 @@ function createApp(opts = {}) {
     const config = opts.config || configLib.load();
     const sso = opts.sso || createSsoClient({ site: 'computer', baseUrl: config.baseUrl, clientId: config.clientId, clientSecret: config.clientSecret, networkUrl: config.networkUrl, networkInternalUrl: config.networkInternalUrl, secureCookies: config.secureCookies });
     const run = opts.run || createRunClient({ baseUrl: config.runUrl, fetchImpl: opts.fetchImpl });
+    const machines = opts.machines || createMachinesClient({ baseUrl: config.machinesUrl, fetchImpl: opts.fetchImpl });
     const app = express();
     app.disable('x-powered-by'); app.set('trust proxy', config.trustProxy);
+    // GET /metrics (loopback only: Prometheus on the host), the HTTP middleware first, process metrics and release_info.
+    const release = require('openvibe-shared/release').createRelease({ service: 'computer', root: path.join(__dirname, '..') });
+    const metrics = require('openvibe-shared/metrics').instrument(app, { service: 'computer', release: release.release });
     app.use(helmet({ contentSecurityPolicy: { directives: {
         defaultSrc: ["'self'"], scriptSrc: ["'self'", "'unsafe-inline'", 'https://openvibe.network', 'https://static.cloudflareinsights.com'], styleSrc: ["'self'", "'unsafe-inline'", 'https://openvibe.network', 'https://fonts.googleapis.com'], fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'], imgSrc: ["'self'", 'data:', 'https://openvibe.network', 'https://openvibe.media'], connectSrc: ["'self'", 'https://openvibe.network', 'https://openvibe.chat', 'https://billing.openvibe.network', 'https://openvibe.events', 'https://cloudflareinsights.com'], frameSrc: ["'self'", 'https://openvibe.network'], frameAncestors: ["'none'"], objectSrc: ["'none'"], baseUri: ["'self'"], formAction: ["'self'", 'https://openvibe.network'],
     } }, crossOriginEmbedderPolicy: false, referrerPolicy: { policy: 'strict-origin-when-cross-origin' } }));
@@ -44,14 +49,14 @@ function createApp(opts = {}) {
     })));
     app.get('/openapi.json', (_req, res) => res.sendFile(path.join(__dirname, '..', 'public', 'openapi.json')));
     app.get('/.well-known/agent.json', (_req, res) => res.sendFile(path.join(__dirname, '..', 'public', '.well-known', 'agent.json')));
-    app.use('/api/v1', createApi({ run, sso }));
+    app.use('/api/v1', createApi({ run, sso, machines }));
     // GET /release.json (ADR-016): the navbar's release watch polls it so open tabs learn of a new release (the 11-09
     // browser sweep found it answering 404 here).
-    require('openvibe-shared/release').createRelease({ service: 'computer', root: path.join(__dirname, '..') }).mount(app);
+    release.mount(app, { registry: metrics.registry });
     app.use('/shared', require('openvibe-shared/serve').handler());
     app.use(express.static(path.join(__dirname, '..', 'public'), { index: false, maxAge: '1h' }));
-    app.use(createPages({ config, run, sso }));
+    app.use(createPages({ config, run, sso, machines }));
     app.use((err, _req, res, _next) => { if (res.headersSent) return; res.status(err.status || 500).type('text/plain').send('Computer could not complete that request.'); });
-    return { app, config, run, sso };
+    return { app, config, run, sso, metrics };
 }
 module.exports = { createApp };
