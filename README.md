@@ -26,7 +26,7 @@ The current Run session API supports browser session create/list/read/end and on
 See [deploy/LAUNCH.md](deploy/LAUNCH.md) for the DNS, Cloudflare, OAuth and vhost sequence. The host-level parked-redirect swap is intentionally a post-review action.
 
 <!-- versions:start -->
-- openvibe-contracts: v0.449.0
+- openvibe-contracts: v0.454.0
 - openvibe-sdk: v0.189.0
 - openvibe-shared: v4.337.0
 <!-- versions:end -->
